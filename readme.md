@@ -1,5 +1,7 @@
 # Mark's Music Maker 🎵
 
+![Mark's Music Maker Screenshot](img/screenshot.jpg)
+
 Mark's Music Maker is a desktop application that allows users to procedurally generate unique MIDI music tracks using a variety of instruments from the base MIDI soundbank. Designed with customization and creativity in mind, the app lets you create music effortlessly by selecting your preferred instruments and adjusting settings, making it perfect for game developers, musicians, and anyone interested in generating random, AI-like music compositions.
 
 ## Features
