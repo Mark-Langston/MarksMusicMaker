@@ -4,6 +4,10 @@
 
 Mark's Music Maker is a Java-based application designed to procedurally generate 1-minute music tracks. It leverages Python and the `music21` library to create MIDI files that can loop seamlessly, featuring orchestral instruments for a rich, engaging sound. The application provides a simple user interface to generate music files easily.
 
+## Sample
+
+[Download Sample Track (sample.wav)](./sample.wav)
+
 ## Features
 
 - **Procedural Music Generation**: Generates 1-minute orchestral music pieces using Python and `music21`.
