@@ -2,18 +2,19 @@ package com.example.marksmusicmaker;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.HashMap;
-import java.util.Map;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.InputStreamReader;
+import java.net.URISyntaxException;
 
 public class MarksMusicMakerUI extends JFrame {
 
     private JTextField filenameField;
     private JProgressBar progressBar;
-    private Map<String, JCheckBox> instrumentCheckBoxes;
 
     public MarksMusicMakerUI() {
         setTitle("Mark's Music Maker");
-        setSize(500, 600); // Adjusted size to accommodate more instruments in two columns
+        setSize(400, 300);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
@@ -37,13 +38,6 @@ public class MarksMusicMakerUI extends JFrame {
         filenamePanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
         mainPanel.add(filenamePanel);
 
-        // Instrument selection
-        JPanel instrumentPanel = new JPanel(new GridLayout(0, 2, 10, 10));
-        instrumentPanel.setBorder(BorderFactory.createTitledBorder("Select Instruments"));
-        instrumentCheckBoxes = new HashMap<>();
-        addInstrumentCheckBoxes(instrumentPanel);
-        mainPanel.add(instrumentPanel);
-
         // Generate button
         JButton generateButton = new JButton("Generate");
         generateButton.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -54,7 +48,7 @@ public class MarksMusicMakerUI extends JFrame {
         mainPanel.add(generateButton);
 
         // Progress bar
-        progressBar = new JProgressBar(0, 100); // Set progress bar with range 0 to 100
+        progressBar = new JProgressBar(0, 100);
         progressBar.setStringPainted(true);
         progressBar.setAlignmentX(Component.CENTER_ALIGNMENT);
         progressBar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
@@ -65,36 +59,95 @@ public class MarksMusicMakerUI extends JFrame {
         setVisible(true);
     }
 
-    private void addInstrumentCheckBoxes(JPanel panel) {
-        String[] instruments = {
-                "Piano", "Electric Piano", "Organ", "Guitar", "Bass",
-                "Strings", "Ensemble", "Brass", "Reed", "Pipe",
-                "Synth Lead", "Synth Pad", "Synth Effects", "Ethnic",
-                "Percussive", "Sound Effects", "Drums"
-        };
-
-        for (String instrument : instruments) {
-            JCheckBox checkBox = new JCheckBox(instrument);
-            instrumentCheckBoxes.put(instrument, checkBox);
-            panel.add(checkBox);
-        }
-    }
-
     private void generateMusic() {
-        // Ensure filename is correctly captured and validated
-        String filename = filenameField.getText().trim(); // Trim to remove any leading or trailing whitespace
+        final String filename = filenameField.getText().trim();  // Mark filename as final
 
         // Ensure the filename ends with ".midi"
-        String finalFilename = filename.toLowerCase().endsWith(".midi") ? filename : filename + ".midi";
+        String outputFilename = filename.toLowerCase().endsWith(".midi") ? filename : filename + ".midi";
 
-        // Get selected instruments
-        Map<String, Boolean> selectedInstruments = new HashMap<>();
-        for (Map.Entry<String, JCheckBox> entry : instrumentCheckBoxes.entrySet()) {
-            selectedInstruments.put(entry.getKey(), entry.getValue().isSelected());
+        // Get the directory where the JAR or build is running
+        File jarDir;
+        try {
+            jarDir = new File(MarksMusicMakerUI.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParentFile();
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error determining JAR directory: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            return;
         }
 
-        MusicGenerator generator = new MusicGenerator();
-        // Run music generation in a separate thread to keep the UI responsive
-        new Thread(() -> generator.generate(finalFilename, selectedInstruments, progressBar)).start();
+        // Construct the full path for the output file in the same directory
+        File outputFile = new File(jarDir, outputFilename);
+
+        // Run the music generation in a background thread using SwingWorker
+        SwingWorker<Void, Integer> worker = new SwingWorker<>() {
+            @Override
+            protected Void doInBackground() {
+                // Show progress bar indeterminate while processing
+                progressBar.setIndeterminate(true);
+
+                try {
+                    // Set the command to run the Python script with the filename argument
+                    ProcessBuilder pb = new ProcessBuilder(
+                            "C:\\Users\\mark_\\AppData\\Local\\Programs\\Python\\Python310\\python.exe", // Full path to Python 3.10 executable
+                            "-u", // Run Python in unbuffered mode to get immediate output
+                            "generate_music.py", // Python script
+                            outputFile.getAbsolutePath() // Full path to the output file
+                    );
+
+                    // Set the working directory to where the script is located
+                    pb.directory(new File("C:\\Users\\mark_\\OneDrive\\Desktop\\MarksMusicMaker\\MarksMusicMaker\\src\\main\\java\\com\\example\\marksmusicmaker"));
+                    pb.redirectErrorStream(true);
+                    Process process = pb.start();
+
+                    // Capture and display the output of the Python script
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                    String line;
+                    int progress = 0;
+                    while ((line = reader.readLine()) != null) {
+                        System.out.println(line);  // Optionally update the UI with script output
+                        // Simulate progress updates
+                        progress += 10; // Increment progress
+                        publish(Math.min(progress, 100)); // Ensure progress does not exceed 100%
+                    }
+
+                    // Wait for the process to finish
+                    int exitCode = process.waitFor();
+
+                    // Check if the output file exists
+                    if (exitCode == 0 && outputFile.exists()) {
+                        JOptionPane.showMessageDialog(MarksMusicMakerUI.this, "Music generated and saved as " + outputFile.getAbsolutePath(), "Success", JOptionPane.INFORMATION_MESSAGE);
+                    } else {
+                        JOptionPane.showMessageDialog(MarksMusicMakerUI.this, "Failed to generate music or find the output file. Check console for errors.", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(MarksMusicMakerUI.this, "Error running Python script: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                } finally {
+                    progressBar.setIndeterminate(false);
+                    progressBar.setValue(100);
+                }
+                return null;
+            }
+
+            @Override
+            protected void process(java.util.List<Integer> chunks) {
+                // Update the progress bar with the latest value
+                for (int progress : chunks) {
+                    progressBar.setValue(progress);
+                }
+            }
+
+            @Override
+            protected void done() {
+                progressBar.setIndeterminate(false);
+                progressBar.setValue(100); // Complete
+            }
+        };
+
+        worker.execute();
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(MarksMusicMakerUI::new);
     }
 }
