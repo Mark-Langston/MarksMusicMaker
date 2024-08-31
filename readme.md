@@ -6,7 +6,7 @@ Mark's Music Maker is a Java-based application designed to procedurally generate
 
 ## Sample
 
-[Download Sample Track (sample.wav)](./sample.wav)
+[Download Sample Track (sample.wav)](/sample.wav)
 
 ## Features
 
