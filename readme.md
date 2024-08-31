@@ -30,22 +30,13 @@ Mark's Music Maker is a Java-based application designed to procedurally generate
     pip install music21
     ```
 
-## Technologies Used
-
-- **Java Swing:** For a simple, intuitive, and responsive user interface.
-- **Java Sound API:** To handle MIDI and audio processing.
-- **Maven:** For managing dependencies and building the project.
-
-## Getting Started
-
-### Prerequisites
-
-- Java 22 or higher
-- Maven
-
 ### Installation
 
 1. **Clone the Repository:**
 
    ```bash
    git clone https://github.com/Mark-Langston/MarksMusicMaker.git
+
+## Licenses
+
+This project includes code from music21, which is licensed under the BSD 3-Clause License. See the LICENSE.txt file for details.
