@@ -8,6 +8,10 @@ Mark's Music Maker is a Java-based application designed to procedurally generate
 
 [![Mark's Music Maker Demo](https://img.youtube.com/vi/ai5xS7uaAcA/0.jpg)](https://youtu.be/ai5xS7uaAcA)
 
+## Download the EXE
+
+https://pcpuppet.itch.io/marks-music-maker
+
 ## Features
 
 - **Procedural Music Generation**: Generates 1-minute orchestral music pieces using Python and `music21`.
